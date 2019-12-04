@@ -41,13 +41,21 @@ class PokemonMapView(APIView):
             return PokemonMap.objects.get(cid=pid)
         except PokemonMap.DoesNotExist:
             raise Http404
+    def get_category_size(self, category):
+        try:
+            return PokemonMap.objects.filter(category=category)
+        except PokemonMap.DoesNotExist:
+            raise Http404
+        
     def get(self, request, pid):
         pokemon = self.get_object(pid)
         serializer = PokemonSerializer(pokemon)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = PokemonSerializer(data=request.data)
+        data = dict(request.data)
+        data['current_rank'] = len(self.get_category_size(data['category']))
+        serializer = PokemonSerializer(data=data)
         if serializer.is_valid():
             try:
                 serializer.save()
